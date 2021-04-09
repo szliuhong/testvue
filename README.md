@@ -1,3 +1,8 @@
+要修改的配置：
+1、src/network/request.js
+2、multidata.json
+3、cloth.json
+
 # testmall
 
 ## Project setup
