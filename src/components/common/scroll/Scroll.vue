@@ -23,7 +23,7 @@ export default {
     },
     pullUpLoad: {
       type: Boolean,
-      defaults: true
+      defaults: false
     }
   },
   mounted() {
@@ -34,22 +34,28 @@ export default {
       probeType: this.probeType,
       pullUpLoad: this.pullUpLoad,
     });
-    this.scroll.on("scroll", (position) => {
-      this.$emit("scroll", position)
-    });
-    this.scroll.on("pullingUp", () => {
-      this.$emit("pullingUp")
-    })
-
-
+    if (this.probeType === 2 || this.probeType === 3) {
+      this.scroll.on("scroll", (position) => {
+        this.$emit("scroll", position)
+      });
+    }
+    if (this.pullUpLoad) {
+      this.scroll.on("pullingUp", () => {
+        this.$emit("pullingUp")
+      });
+    }
   },
   methods: {
     scrollTo(x, y, time = 500) {
-      this.scroll.scrollTo(x, y, time);
+      this.scroll && this.scroll.scrollTo(x, y, time);
     },
     finishPullUp() {
-      this.scroll.finishPullUp();
+      this.scroll && this.scroll.finishPullUp();
+    },
+    refresh() {
+      this.scroll && this.scroll.refresh();
     }
+
   }
 
 }

@@ -3,13 +3,13 @@
     <nav-bar class="home-nav">
       <div slot="center">购物街</div>
     </nav-bar>
-
+    <tab-control class="tab-control" :titles="titles" @tabClick="tabClick" ref="tabControl1" v-show="isTabFixed"/>
     <scroll class="content" ref="scroll" :probe-type="3" :pull-up-load="true" @scroll="contentScroll"
             @pullingUp="loadMore">
-      <home-swipe :banners="banners"/>
+      <home-swiper :banners="banners" @homeSwiperImageLoad="homeSwiperImageLoad"/>
       <recommend-view :recommends="recommends"/>
       <feature-view/>
-      <tab-control class="tab-control" :titles="titles" @tabClick="tabClick"/>
+      <tab-control :class="{fixed: isTabFixed}" :titles="titles" @tabClick="tabClick" ref="tabControl2"/>
       <goods-list :goods="showGoods"/>
     </scroll>
 
@@ -20,17 +20,19 @@
 
 <script>
 
-import NavBar from "@/components/content/navbar/NavBar";
-import TabControl from "@/components/content/tabcontrol/TabControl";
+import NavBar from "components/content/navbar/NavBar";
+import TabControl from "components/content/tabcontrol/TabControl";
 
-import RecommendView from "@/views/home/childcomps/RecommendView";
-import HomeSwipe from "@/views/home/childcomps/HomeSwipe";
-import FeatureView from "@/views/home/childcomps/FeatureView";
+import RecommendView from "views/home/childcomps/RecommendView";
+import HomeSwiper from "views/home/childcomps/HomeSwiper";
+import FeatureView from "views/home/childcomps/FeatureView";
 
-import {getHomeMultiData, getHomeGoods} from "@/network/home";
-import GoodsList from "@/components/content/goods/GoodsList";
+import GoodsList from "components/content/goods/GoodsList";
 import Scroll from "components/common/scroll/Scroll";
 import BackTop from "components/content/backtop/BackTop";
+
+import {getHomeMultiData, getHomeGoods} from "network/home";
+import {debounce} from "common/utils";
 
 export default {
   name: 'Home',
@@ -40,7 +42,7 @@ export default {
     GoodsList,
     TabControl,
     FeatureView,
-    HomeSwipe,
+    HomeSwiper,
     RecommendView,
     NavBar
   },
@@ -62,6 +64,8 @@ export default {
       },
       currentType: 'pop',
       showBackTop: false,
+      tabOffsetTop: 0,
+      isTabFixed: false,
     }
   },
   created() {
@@ -71,10 +75,20 @@ export default {
     this.getHomeGoods("new");
     this.getHomeGoods("sell");
   },
+  mounted() {
+    const refresh= debounce(this.$refs.scroll.refresh, 300)
+
+    this.$bus.$on("itemImageLoad", () =>{
+      refresh();
+    });
+  },
   methods: {
     /**
      * 事件监听方法
      */
+    homeSwiperImageLoad(){
+      this.offsetTop = this.$refs.tabControl2.$el.offsetTop;
+    },
     tabClick(index) {
       switch (index) {
         case 0:
@@ -86,17 +100,19 @@ export default {
         case 2:
           this.currentType = 'sell';
       }
+      this.$refs.tabControl1.currentIndex = index;
+      this.$refs.tabControl2.currentIndex = index;
     },
     backClick() {
       this.$refs.scroll.scrollTo(0, 0, 500);
     },
     contentScroll(position) {
-      this.showBackTop = (-position.y) > 500
+      this.showBackTop = (-position.y) > 1000;
+
+      this.isTabFixed = (-position.y) > this.offsetTop;
     },
     loadMore() {
       this.getHomeGoods(this.currentType);
-      this.$refs.scroll.scroll.refresh();
-      this.$refs.scroll.finishPullUp();
     },
 
 
@@ -114,6 +130,8 @@ export default {
       getHomeGoods(type, page).then(res => {
         this.goods[type].list.push(...res.cloth);
         this.goods[type].page += 1;
+
+        this.$refs.scroll.finishPullUp();
       });
     }
   }
@@ -122,7 +140,7 @@ export default {
 
 <style scoped>
 #home {
-  padding-top: 44px;
+  /*padding-top: 44px;*/
   /*ViewPort height*/
   height: 100vh;
   position: relative;
@@ -132,19 +150,16 @@ export default {
   background-color: var(--color-tint);
   color: #fff;
 
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
+  /*position: fixed;*/
+  /*left: 0;*/
+  /*right: 0;*/
+  /*top: 0;*/
+  /*z-index: 9;*/
+}
+.tab-control{
+  position: relative;
   z-index: 9;
 }
-
-.tab-control {
-  position: sticky;
-  top: 44px;
-  z-index: 9;
-}
-
 .content {
   overflow: hidden;
   position: absolute;
