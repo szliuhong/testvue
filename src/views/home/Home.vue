@@ -66,6 +66,7 @@ export default {
       showBackTop: false,
       tabOffsetTop: 0,
       isTabFixed: false,
+      currentPostionY: 0,
     }
   },
   created() {
@@ -81,6 +82,13 @@ export default {
     this.$bus.$on("itemImageLoad", () =>{
       refresh();
     });
+  },
+  activated() {
+    this.$refs.scroll.refresh();
+    this.$refs.scroll.scrollTo(0, this.currentPostionY, 0);
+  },
+  deactivated() {
+    this.currentPostionY= this.$refs.scroll.getPositionY();
   },
   methods: {
     /**
